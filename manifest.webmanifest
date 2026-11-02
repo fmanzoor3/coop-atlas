@@ -1,0 +1,17 @@
+{
+  "name": "Coop Database",
+  "short_name": "Coop Database",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#201044",
+  "theme_color": "#201044",
+  "icons": [
+    {
+      "src": "./apple-touch-icon.png?v=3",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
