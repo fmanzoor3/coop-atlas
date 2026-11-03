@@ -5,9 +5,10 @@ https://fmanzoor3.github.io/coop-atlas/
 
 ## Architecture
 
-`index.html` contains all UI, CSS, JavaScript and the 167-game seed catalogue.
+`index.html` defines the interface, `styles.css` contains responsive styling,
+and `app.js` contains behaviour, metadata and the unchanged 167-game seed catalogue.
 There is no build step, backend, account system or service worker. It includes
-12 discovery tabs, editing, status/verdict controls, search, filters, JSON
+Discover / Library / Saved navigation, category tabs, editing, status/verdict controls, search, filters, JSON
 import/export, detail dialogs and a screenshot lightbox. There are 152 Steam ID
 mappings, 30 detailed assessments and 24 editorial entries (coverage can overlap).
 Images load directly from Steam CDNs and several third-party sites. Details use
@@ -65,14 +66,33 @@ After deployment:
 - Validate imported records before replacing storage; offer a pre-import backup.
   Currently only `data.games` being an array is checked. Malformed records can
   break rendering. Storage write failures also need a visible, recoverable error.
-- Verify Steam mappings/platform-specific online support. The `native` helper
-  currently classifies `Online-like` as native online because it uses startsWith.
+- Verify Steam mappings/platform-specific online support. `Online-like` is now excluded from native-online recommendations;
+  exact platform support still needs auditing.
 - Reduce screenshot dependency on an unaffiliated public CORS proxy, preferably
   with checked-in verified metadata and screenshot URLs. Preserve fallback links.
-- Separate data and scripts when useful; avoid a major rewrite or backend until
-  shared-profile and synchronisation trade-offs are discussed.
+- Avoid a major rewrite or backend until shared-profile and synchronisation
+  trade-offs are discussed. HTML, CSS and JavaScript are now separate files.
 
 Validation for this icon change: JavaScript syntax, mobile Chromium smoke test,
 167-card rendering, detail dialog, existing storage preservation on load, status
 persistence, export/import roundtrip, PNG dimensions/mode and deployed assets.
 Actual iOS Home Screen installation still requires the device check above.
+
+
+## Mobile interface refresh
+
+Browsing now uses Discover, Library and Saved views with compact artwork cards.
+A bookmark uses the existing `Good suggestion` verdict; no storage migration is
+needed. Played-game verdicts stay intact: those cards offer editing rather than
+a bookmark. Play status, verdict, notes, screenshots and assessments are in the
+game details. Backup/import, adding games and storage guidance are in the app
+menu. Platform/genre/sort controls open in a mobile sheet. Search and categories
+stay accessible while scrolling. The default discovery category is online games
+not yet played, ordered by fit. All games remain accessible under Discover.
+
+UI validation: mobile Chromium interactions, 320/375/390/430/768/1440px overflow
+checks, existing storage left unchanged on load, bookmark/status persistence,
+custom-game creation, filtering/sorting, JSON roundtrip, keyboard Escape and
+lightbox restoration. Artwork was previewed using downloaded copies of the
+actual CDN images; failure fallbacks were checked separately. Physical iPhone
+Safari testing remains a device check.
