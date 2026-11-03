@@ -27,4 +27,22 @@ await db.exec("update public.coop_devices set display_name='Manu'");await db.exe
 await as(manu);await denied("update public.coop_responses set response='pass' where suggestion_id=$1",[suggestion]);
 await as(other);for(const table of ['coop_game_state','coop_ratings','coop_suggestions','coop_responses'])assert.equal((await db.query('select * from public.'+table)).rows.length,0);
 await db.exec('reset role');await db.exec("update coop_private.pairing_codes set expires_at=now()-interval '1 day' where consumed_at is null");await as(other);await denied("select public.coop_pair_device($1,'Manu')",[codes[3]]);
-await db.close();console.log('PASS: anonymous/unpaired denial, one-use and expired pairing codes, shared progress, revision checks, separate ratings, profile switching, multi-device access, suggestions/responses and withdrawn proposals.');
+// The new scale converts old scores once and blocks stale direct-write clients.
+await db.exec('reset role');await db.exec(read('003_ratings_out_of_ten.sql'));
+assert.deepEqual((await db.query('select stars from public.coop_ratings order by profile_name')).rows.map(r=>r.stars),[10,6]);
+await db.exec(read('003_ratings_out_of_ten.sql'));
+assert.deepEqual((await db.query('select stars from public.coop_ratings order by profile_name')).rows.map(r=>r.stars),[10,6]);
+await as(fred);await denied("update public.coop_ratings set stars=4");await denied("update public.coop_ratings set note='old client'");
+assert.equal((await db.query('select public.coop_rating_scale() as scale')).rows[0].scale,10);
+const prior=(await db.query("select updated_at::text as stamp from public.coop_ratings where profile_name='Fred'")).rows[0].stamp;
+const save="select * from public.coop_save_rating_v10($1,$2,$3::smallint,$4,$5::text[],$6::text[],$7::timestamptz)";
+await db.query(save,['seed:1','Fred',9,'Out of ten',[],[],prior]);
+await denied(save,['seed:1','Fred',8,'Stale',[],[],prior]);
+await denied(save,['seed:1','Manu',9,'Wrong profile',[],[],null]);
+await denied(save,['seed:1','Fred',11,'Invalid',[],[],null]);
+assert.equal((await db.query("select stars from public.coop_ratings where profile_name='Manu'")).rows[0].stars,6);
+await db.exec("insert into public.coop_game_state(game_id,play_state) values ('seed:2','Played')");
+await db.query(save,['seed:2','Fred',10,'New rating',[],[],null]);
+await as(other);await denied(save,['seed:2','Fred',1,'Outsider',[],[],null]);
+await as('', 'anon');await denied('select public.coop_rating_scale()');
+await db.close();console.log('PASS: anonymous/unpaired denial, one-use and expired pairing codes, shared progress, revision checks, safe rerunnable 1–10 migration, versioned rating endpoint, separate ratings, profile switching, multi-device access, suggestions/responses and withdrawn proposals.');

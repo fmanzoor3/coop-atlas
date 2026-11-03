@@ -106,3 +106,7 @@ Database setup and access-policy tests are in [supabase/README.md](supabase/READ
 [setup.html](setup.html) provides copy buttons for the owner-run SQL. The app supports opt-in paired-device syncing, Fred/Manu profiles,
 shared progress, a suggestion inbox and individual ratings. Original local saves
 remain separate, with an explicit, non-overwriting transfer option.
+
+Personal ratings use 1–10 after applying the owner-run ratings migration in
+[setup.html#ratings](setup.html#ratings). Marking a game Played offers an optional
+personal rating; shared status is saved independently.

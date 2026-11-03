@@ -103,3 +103,26 @@ failed-save recovery, explicit transfer, and mobile/desktop widths. The SQL test
 separately execute RLS and pairing rules in PostgreSQL. Live auth configuration
 and unauthenticated REST denial were verified; first physical-device pairing and
 cross-device syncing still require Fred and Manu's own browsers.
+
+
+## Ratings out of ten
+
+Run `003_ratings_out_of_ten.sql` in the Supabase SQL Editor, then refresh the app.
+It doubles existing 1–5 ratings once, preserves notes/personas, and changes the
+constraint to 1–10. A private migration marker and table lock make reruns safe.
+New writes go through `coop_save_rating_v10`; old direct 1–5 clients are denied
+writes rather than silently misinterpreting scores. The endpoint derives the
+persona from the paired device and verifies the form's expected persona and
+rating timestamp. It requires the game to be Played.
+
+Before migration, the new client shows old ratings read-only with an update link.
+After migration, details use numbered 1–10 buttons. A successful transition to
+Played opens an optional personal-rating prompt. Skipping, closing, or failing a
+rating save never undoes shared play status. Each persona can rate independently;
+notes are optional behind Add a note. Shared exports/cache include `ratingScale`.
+The migration is owner-only SQL; the public browser key cannot apply it.
+
+Validation includes real PostgreSQL conversion/rerun tests, old-client write
+rejection, scale constraints, wrong-persona and stale-write protection, and
+browser tests for skipping/submitting the prompt, 10-point editing, separate
+personas and preserving drafts on failures.
