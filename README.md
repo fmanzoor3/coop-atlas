@@ -7,7 +7,8 @@ https://fmanzoor3.github.io/coop-atlas/
 
 `index.html` defines the interface, `styles.css` contains responsive styling,
 and `app.js` contains behaviour, metadata and the unchanged 167-game seed catalogue.
-There is no build step, backend, account system or service worker. It includes
+There is no application build step or service worker. Optional shared mode uses
+Supabase with anonymously authenticated, privately paired devices. The UI includes
 Discover / Library / Saved navigation, category tabs, editing, status/verdict controls, search, filters, JSON
 import/export, detail dialogs and a screenshot lightbox. There are 152 Steam ID
 mappings, 30 detailed assessments and 24 editorial entries (coverage can overlap).
@@ -21,12 +22,13 @@ Keep `coopAtlasGames` unchanged: it stores the complete games array, including
 user changes and additions. Existing legacy statuses are mapped to playState and
 verdict in memory on load. Export is `{version:1, exported, games}`; the filename
 is now `coop-database-backup.json`. Existing backup files remain compatible.
-Import replaces the whole array after confirmation; it does not merge.
+In local mode, import replaces the array after confirmation. In shared mode,
+transfer adds missing records only and preserves existing shared records.
 
 Safari and an installed iPhone Home Screen app have separate localStorage.
 Export from BOTH contexts before removing an app or clearing any website data.
-Import the chosen backup inside the installed app to transfer data. There is no
-synchronisation. See WebKit's Safari 17.2 release article:
+Pair each browser/app separately to access the same shared database, or use JSON
+backups for the local-only library. See WebKit's Safari 17.2 release article:
 https://webkit.org/blog/14787/webkit-features-in-safari-17-2/
 
 ## Icons and iPhone verification
@@ -70,8 +72,8 @@ After deployment:
   exact platform support still needs auditing.
 - Reduce screenshot dependency on an unaffiliated public CORS proxy, preferably
   with checked-in verified metadata and screenshot URLs. Preserve fallback links.
-- Avoid a major rewrite or backend until shared-profile and synchronisation
-  trade-offs are discussed. HTML, CSS and JavaScript are now separate files.
+- Continue improving the optional shared library without a major frontend rewrite.
+  HTML, CSS and JavaScript are separate files.
 
 Validation for this icon change: JavaScript syntax, mobile Chromium smoke test,
 167-card rendering, detail dialog, existing storage preservation on load, status
@@ -98,8 +100,9 @@ actual CDN images; failure fallbacks were checked separately. Physical iPhone
 Safari testing remains a device check.
 
 
-## Shared library setup (in progress)
+## Shared library
 
 Database setup and access-policy tests are in [supabase/README.md](supabase/README.md).
-[setup.html](setup.html) provides copy buttons for the owner-run SQL. The game app
-remains local-only until the schema is applied and client syncing is implemented.
+[setup.html](setup.html) provides copy buttons for the owner-run SQL. The app supports opt-in paired-device syncing, Fred/Manu profiles,
+shared progress, a suggestion inbox and individual ratings. Original local saves
+remain separate, with an explicit, non-overwriting transfer option.

@@ -1,7 +1,7 @@
 # Shared library foundation
 
-Status: schema and setup instructions are ready. The game app is still local-only;
-no browser save has been uploaded, modified, or automatically migrated.
+Status: shared mode is implemented and opt-in. No browser save is automatically
+uploaded or replaced. The original `coopAtlasGames` save remains separate.
 
 Project: https://eoinghlgylynomxaqhji.supabase.co
 `client-config.json` contains the public browser connection settings, not a secret.
@@ -18,7 +18,8 @@ Use ../setup.html in the published site for copy buttons.
 3. Run `002_generate_pairing_codes.sql` in a new query. Keep the four resulting
    codes private. Each is one-use and expires after seven days. The query can be
    rerun to generate additional codes. It does not revoke earlier unused codes.
-4. Return to the development chat after success. No user emails are needed.
+4. Open the app, choose Fred or Manu, and pair with one code per browser/app.
+   No user emails are needed. No further SQL is required for the client.
 
 The publishable key can read project auth settings, but cannot execute SQL or
 change authentication configuration. These owner actions must be completed in
@@ -73,3 +74,32 @@ Anonymous sessions can be lost when browser storage is cleared. Re-pairing with
 a fresh code recovers database access; it does not create a new Fred/Manu profile.
 Safari and Home Screen sessions are separate and may each need a pairing code.
 Keep exports available after syncing; do not silently overwrite local save files.
+
+
+## Client behaviour and verification
+
+`sync.js` uses the locally bundled Supabase JS client 2.118.0. The auth session has
+its own `coopDbAuth` storage key. Paired devices remember their profile and can
+switch in profile settings. Shared data is cached separately from local saves.
+The Together inbox shows suggestions, Yes/Maybe/Pass responses and Ready to play.
+Unread badges are based on persisted timestamps. This is in-app notification,
+not phone push. Rating and response updates use timestamp conditions; game edits
+use revision and field conflict checks. Edits are paused while offline/saving.
+Failed game edits remain available under Export unsaved changes in profile settings.
+
+Refresh occurs every 20 seconds while visible, on app focus, and after writes.
+This avoids needing additional Realtime publication setup. First transfer is
+explicit, downloads a backup, and inserts only missing records. It never replaces
+existing shared records; reconciling conflicting old saves remains a manual edit.
+Shared exports include ratings/proposals/responses in an additional `shared` field;
+current import restores missing games only, not ratings or proposal history.
+Personal ratings are recorded; fit scores still use the existing editorial model.
+
+Tests: `python tests/shared-ui.py` from the repository root, with Playwright and
+Chromium available. Tests use two isolated browser sessions and a deterministic
+API fixture, never production pairing codes. They cover pairing persistence,
+no automatic upload, shared state, individual ratings, responses, switching,
+failed-save recovery, explicit transfer, and mobile/desktop widths. The SQL tests
+separately execute RLS and pairing rules in PostgreSQL. Live auth configuration
+and unauthenticated REST denial were verified; first physical-device pairing and
+cross-device syncing still require Fred and Manu's own browsers.
