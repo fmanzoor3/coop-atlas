@@ -11,6 +11,8 @@ os.chdir(Path(__file__).resolve().parents[1])
 state={n:[] for n in ['coop_devices','coop_game_state','coop_ratings','coop_suggestions','coop_responses']}
 fail_write=False
 scale=5
+hold_rating=False
+held_ratings=[]
 stamp=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z')
 def token(uid):
  enc=lambda o:base64.urlsafe_b64encode(json.dumps(o).encode()).decode().rstrip('=')
@@ -31,6 +33,7 @@ def fixture(route):
   else:out(10)
   return
  if url.path=='/rest/v1/rpc/coop_save_rating_v10':
+  if hold_rating:held_ratings.append(route);return
   if fail_write:out({'message':'Simulated save failure'},503);return
   m=next((r for r in state['coop_devices'] if r['user_id']==uid),None)
   if not m or m['display_name']!=data['p_profile_name']:out({'message':'Profile changed'},403);return
@@ -88,8 +91,8 @@ with sync_playwright() as p:
  a.evaluate("openGame(games.find(g=>g.playState==='Played').id)");assert a.locator('#sharedDetail').get_by_role('link',name='Apply the 1–10 ratings update').count()==1;assert a.locator('#ratingForm').count()==0;a.evaluate('closeGame()');scale=10;a.evaluate('CoopSync.refreshSettings()');b.evaluate('CoopSync.refreshSettings()')
  assert a.evaluate("JSON.parse(localStorage.getItem('coopAtlasGames'))[0].name")=='Local only game'
  a.evaluate("quickSet(1,'playState','Played')");a.wait_for_function("games.find(g=>g.id===1).playState==='Played'");a.wait_for_selector('#ratingPrompt[open]');a.screenshot(path='/tmp/coop-rating.png');assert not state['coop_ratings'];a.get_by_role('button',name='Not now',exact=True).click();assert not state['coop_ratings'];b.evaluate('CoopSync.refreshSettings()');b.wait_for_function("games.find(g=>g.id===1).playState==='Played'")
- a.evaluate('openGame(1)');a.locator('#ratingForm').get_by_role('button',name='9 out of 10',exact=True).click();a.locator('#ratingForm details').evaluate('(e)=>e.open=true');a.locator('#personalNote').fill('Fred liked this');fail_write=True;a.get_by_role('button',name='Save my rating').click();a.wait_for_timeout(300);assert a.locator('#personalNote').input_value()=='Fred liked this';fail_write=False;a.get_by_role('button',name='Save my rating').click();a.wait_for_timeout(400);a.locator('#ratingForm').get_by_role('button',name='8 out of 10',exact=True).click();a.get_by_role('button',name='Save my rating').click();a.wait_for_timeout(300)
- remote_rating=next(r for r in state['coop_ratings'] if r['profile_name']=='Fred');remote_rating.update(stars=7,note='Changed on another device',updated_at=stamp());a.evaluate('CoopSync.refreshSettings()');a.get_by_role('button',name='Save my rating').click();a.wait_for_timeout(300);assert remote_rating['stars']==7;assert a.locator('#personalNote').input_value()=='Fred liked this'
+ a.evaluate('openGame(1)');a.locator('#ratingForm').get_by_role('button',name='9 out of 10',exact=True).click();a.locator('#ratingForm details').evaluate('(e)=>e.open=true');a.locator('#personalNote').fill('Fred liked this');fail_write=True;a.get_by_role('button',name='Save my rating').click();a.wait_for_timeout(300);assert a.locator('#personalNote').input_value()=='Fred liked this';assert 'Could not save: Simulated save failure' in a.locator('#ratingForm [data-rating-feedback]').inner_text();fail_write=False;hold_rating=True;a.get_by_role('button',name='Save my rating').click();a.wait_for_timeout(100);assert a.locator('#ratingForm button[type=submit]').inner_text()=='Saving…';assert a.locator('#ratingForm button[type=submit]').is_disabled();assert a.locator('#ratingForm [data-rating-feedback]').inner_text()=='Saving your rating…';hold_rating=False;fixture(held_ratings.pop());a.wait_for_timeout(400);assert a.locator('#ratingForm [data-rating-feedback]').inner_text()=='Saved — 9/10 for Fred.';assert a.locator('#ratingForm button[type=submit]').inner_text()=='Saved ✓';a.screenshot(path='/tmp/rating-saved.png');a.locator('#ratingForm').get_by_role('button',name='8 out of 10',exact=True).click();a.get_by_role('button',name='Save my rating').click();a.wait_for_timeout(300)
+ remote_rating=next(r for r in state['coop_ratings'] if r['profile_name']=='Fred');remote_rating.update(stars=7,note='Changed on another device',updated_at=stamp());a.evaluate('CoopSync.refreshSettings()');a.locator('#ratingForm button[type=submit]').click();a.wait_for_timeout(300);assert remote_rating['stars']==7;assert a.locator('#personalNote').input_value()=='Fred liked this'
  b.evaluate('openGame(1)');b.locator('#ratingForm').get_by_role('button',name='6 out of 10',exact=True).click();b.get_by_role('button',name='Save my rating').click();b.wait_for_timeout(400);assert len(state['coop_ratings'])==2;assert {r['profile_name']:r['stars'] for r in state['coop_ratings']}=={'Fred':7,'Manu':6}
  a.evaluate('closeGame();openGame(2)');a.get_by_role('button',name='Should we play this?',exact=True).click();a.wait_for_timeout(400);assert len(state['coop_suggestions'])==1
  b.evaluate('closeGame();CoopSync.inbox()');b.wait_for_selector('#sharedInbox[open]');b.screenshot(path='/tmp/coop-inbox.png');b.get_by_role('button',name='Yes',exact=True).click();b.wait_for_timeout(400);assert state['coop_responses'][0]['response']=='yes';assert b.locator('#sharedInbox').inner_text().count('Portal 2')==1
