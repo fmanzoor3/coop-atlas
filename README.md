@@ -115,3 +115,20 @@ Library opens on All games and orders by recorded personal ratings, using the
 average when both profiles have rated. A single rating is labelled with its
 profile name. Unrated games follow, with legacy Loved verdicts first. Library
 cards show actual ratings rather than predicted fit; Discover retains fit scores.
+
+
+## Interface polish
+
+`polish.css` supplies the current blue/lilac/mint visual theme above the base
+layout rules. Cards use meaningful score colours and avoid repeating unrated
+labels. Ratings sit next to play status in game details. Generic genre-derived
+assessments are omitted; individual assessments and all catalogue data remain.
+The editor keeps legacy status internally but exposes one play-status/verdict
+pair; metadata and device-transfer actions use progressive disclosure. Proposal
+actions reflect the other person's response and avoid duplicate suggestions.
+
+`python tests/local-ui.py` and `python tests/shared-ui.py` exercise local editing,
+backup roundtrips, filters, shared ratings and suggestion flows, visible feedback,
+and widths from 320 to 1440 pixels. Optional images cached in /tmp support visual
+QA without making tests depend on external image services. Physical-device
+safe-area behaviour should also be checked on an iPhone Home Screen launch.
