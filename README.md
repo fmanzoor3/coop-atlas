@@ -110,3 +110,8 @@ remain separate, with an explicit, non-overwriting transfer option.
 Personal ratings use 1–10 after applying the owner-run ratings migration in
 [setup.html#ratings](setup.html#ratings). Marking a game Played offers an optional
 personal rating; shared status is saved independently.
+
+Library opens on All games and orders by recorded personal ratings, using the
+average when both profiles have rated. A single rating is labelled with its
+profile name. Unrated games follow, with legacy Loved verdicts first. Library
+cards show actual ratings rather than predicted fit; Discover retains fit scores.
