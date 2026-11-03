@@ -96,3 +96,10 @@ custom-game creation, filtering/sorting, JSON roundtrip, keyboard Escape and
 lightbox restoration. Artwork was previewed using downloaded copies of the
 actual CDN images; failure fallbacks were checked separately. Physical iPhone
 Safari testing remains a device check.
+
+
+## Shared library setup (in progress)
+
+Database setup and access-policy tests are in [supabase/README.md](supabase/README.md).
+[setup.html](setup.html) provides copy buttons for the owner-run SQL. The game app
+remains local-only until the schema is applied and client syncing is implemented.

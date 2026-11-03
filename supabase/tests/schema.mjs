@@ -1,0 +1,30 @@
+import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const root=process.argv[2]||new URL('../',import.meta.url);
+const read=name=>fs.readFileSync(typeof root==='string'?root+'/'+name:new URL(name,root),'utf8');
+const db=new PGlite();
+await db.exec(`create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated;`);
+await db.exec(read('001_shared_library.sql'));
+const fred='00000000-0000-4000-8000-000000000001',manu='00000000-0000-4000-8000-000000000002',other='00000000-0000-4000-8000-000000000003',newFred='00000000-0000-4000-8000-000000000004';
+await db.query('insert into auth.users values ($1),($2),($3),($4)',[fred,manu,other,newFred]);
+const codes=(await db.query(read('002_generate_pairing_codes.sql'))).rows.map(r=>r.pairing_code);
+assert.equal(codes.length,4);assert.equal(new Set(codes).size,4);
+async function as(id,role='authenticated'){await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec(`set role ${role}`)}
+async function denied(sql,args=[]){let failed=false;try{await db.query(sql,args)}catch{failed=true}assert(failed,sql)}
+await as('', 'anon');await denied('select * from public.coop_game_state');await denied('select * from public.coop_devices');await denied("select public.coop_pair_device($1,'Fred')",[codes[0]]);
+await as(other);assert.equal((await db.query('select * from public.coop_devices')).rows.length,0);await denied("insert into public.coop_game_state(game_id) values ('seed:1')");await denied("insert into public.coop_devices(user_id,display_name) values ($1,'Fred')",[other]);await denied("select public.coop_pair_device('00000000000000000000000000000000','Fred')");await denied('select * from coop_private.pairing_codes');
+await as(fred);await db.query("select public.coop_pair_device($1,'Fred')",[codes[0]]);assert.equal((await db.query('select * from public.coop_devices')).rows.length,1);await db.exec("insert into public.coop_game_state(game_id) values ('seed:1')");await db.exec("update public.coop_game_state set play_state='Played' where game_id='seed:1' and revision=1");assert.equal((await db.query('select revision from public.coop_game_state')).rows[0].revision,2);await denied('update public.coop_game_state set revision=999');
+await db.exec("insert into public.coop_ratings(game_id,stars,note) values ('seed:1',5,'Fred review')");await denied("insert into public.coop_ratings(game_id,profile_name,stars) values ('seed:1','Manu',1)");
+const suggestion=(await db.query("insert into public.coop_suggestions(game_id,message) values ('seed:1','Play again?') returning id")).rows[0].id;
+await denied("insert into public.coop_responses(suggestion_id,response) values ($1,'yes')",[suggestion]);
+await as(manu);await denied("select public.coop_pair_device($1,'Manu')",[codes[0]]);await db.query("select public.coop_pair_device($1,'Manu')",[codes[1]]);
+assert.equal((await db.query("select * from public.coop_game_state where play_state='Played'")).rows.length,1);assert.equal((await db.query("update public.coop_game_state set play_state='Not played' where revision=1 returning game_id")).rows.length,0);
+await db.exec("insert into public.coop_ratings(game_id,stars,note) values ('seed:1',2,'Manu review')");assert.equal((await db.query('select * from public.coop_ratings')).rows.length,2);assert.equal((await db.query("update public.coop_ratings set stars=1 where profile_name='Fred' returning *")).rows.length,0);
+await db.query("insert into public.coop_responses(suggestion_id,response) values ($1,'yes')",[suggestion]);await denied("insert into public.coop_responses(suggestion_id,profile_name,response) values ($1,'Fred','pass')",[suggestion]);
+await as(newFred);await db.query("select public.coop_pair_device($1,'Fred')",[codes[2]]);assert.equal((await db.query("select stars from public.coop_ratings where profile_name='Fred'")).rows[0].stars,5);
+await db.exec("update public.coop_devices set display_name='Manu'");await db.exec("update public.coop_ratings set stars=3 where profile_name='Manu'");await db.exec("update public.coop_devices set display_name='Fred'");await db.query('update public.coop_suggestions set withdrawn=true where id=$1',[suggestion]);
+await as(manu);await denied("update public.coop_responses set response='pass' where suggestion_id=$1",[suggestion]);
+await as(other);for(const table of ['coop_game_state','coop_ratings','coop_suggestions','coop_responses'])assert.equal((await db.query('select * from public.'+table)).rows.length,0);
+await db.exec('reset role');await db.exec("update coop_private.pairing_codes set expires_at=now()-interval '1 day' where consumed_at is null");await as(other);await denied("select public.coop_pair_device($1,'Manu')",[codes[3]]);
+await db.close();console.log('PASS: anonymous/unpaired denial, one-use and expired pairing codes, shared progress, revision checks, separate ratings, profile switching, multi-device access, suggestions/responses and withdrawn proposals.');
