@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Coop Database · Our game library</title><link rel="icon" type="image/png" href="./apple-touch-icon-v4.png"><link rel="icon" type="image/svg+xml" href="./icon.svg"><link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v4.png"><link rel="manifest" href="./manifest.webmanifest?v=4"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Coop Database"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#201044"><meta name="description" content="Your shared library of co-op games. Find something worth playing together.">
-<link rel="stylesheet" href="./styles.css?v=5">
-<script src="./app.js?v=5" defer></script>
+<link rel="stylesheet" href="./styles.css?v=6">
+<script src="./app.js?v=6" defer></script>
 </head><body>
 <a class="skip-link" href="#main">Skip to games</a>
 <header class="app-header"><div class="header-inner">
@@ -8,8 +8,7 @@
 <nav class="desktop-nav" aria-label="Main navigation"><button data-view="discover" onclick="setView('discover')">Discover</button><button data-view="library" onclick="setView('library')">Library</button><button data-view="saved" onclick="setView('saved')">Saved<span class="saved-count"></span></button></nav>
 <button class="icon-button menu-button" onclick="openSheet('appMenu')" aria-label="Open app menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg></button>
 </div></header>
-<main id="main">
-<div class="page-heading"><div><p class="eyebrow" id="viewEyebrow">YOUR NEXT TWO-PLAYER SESSION</p><h1 id="viewTitle">Find your next co-op.</h1></div><span class="collection-count" id="collectionCount"></span></div>
+<main id="main" aria-label="Game library">
 <div class="browse-tools"><div class="search-row"><label class="search-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="search" type="search" placeholder="Search games" aria-label="Search games" oninput="render()" autocomplete="off"></label><button id="filterButton" class="filter-button" onclick="openSheet('filterSheet')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span>Filters</span><span id="filterCount" hidden></span></button></div>
 <nav id="tabs" class="tabs" aria-label="Game categories"></nav></div>
 <div id="activeFilters" class="active-filters"></div>

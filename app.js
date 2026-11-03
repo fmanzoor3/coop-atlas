@@ -13,9 +13,6 @@ function render(){
  const count=games.filter(g=>g.verdict==='Good suggestion').length;
  document.querySelectorAll('[data-view]').forEach(b=>{const active=b.dataset.view===currentView;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
  document.querySelectorAll('.saved-count').forEach(el=>{el.textContent=count?' '+count:''});
- const title={discover:'Find your next co-op.',library:'Your time, well played.',saved:'The next-session shortlist.'};
- $('viewTitle').textContent=title[currentView];$('viewEyebrow').textContent={discover:'DISCOVER',library:'YOUR LIBRARY',saved:'SAVED FOR LATER'}[currentView];
- $('collectionCount').textContent=games.length+' games';
  $('tabs').hidden=currentView==='saved';$('tabs').innerHTML=viewTabs[currentView].map(k=>`<button class="${k===tab?'active':''}" aria-pressed="${k===tab}" onclick="setTab('${k}')">${esc(tabs.find(t=>t[0]===k)[1])}</button>`).join('');
  const filtered=games.filter(g=>matchesTab(g)&&(!genre||g.genre===genre)&&(!platform||g.platforms.split(',').some(p=>p.trim()===platform))&&[g.name,g.genre,g.note,g.platforms].join(' ').toLowerCase().includes(q));
  filtered.sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):sort==='interest'?(b.interest||0)-(a.interest||0)||b.score-a.score:b.score-a.score||a.name.localeCompare(b.name));
