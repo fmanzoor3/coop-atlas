@@ -119,7 +119,7 @@ cards show actual ratings rather than predicted fit; Discover retains fit scores
 
 ## Interface polish
 
-`polish.css` supplies the current blue/lilac/mint visual theme above the base
+`polish.css` supplies the current charcoal/apricot visual theme with lilac/mint profile accents above the base
 layout rules. Cards use meaningful score colours and avoid repeating unrated
 labels. Ratings sit next to play status in game details. Generic genre-derived
 assessments are omitted; individual assessments and all catalogue data remain.
@@ -132,3 +132,13 @@ backup roundtrips, filters, shared ratings and suggestion flows, visible feedbac
 and widths from 320 to 1440 pixels. Optional images cached in /tmp support visual
 QA without making tests depend on external image services. Physical-device
 safe-area behaviour should also be checked on an iPhone Home Screen launch.
+
+
+## Display modes
+
+Discover and Saved default to the artwork grid. Library defaults to compact rows
+(two columns on wider desktop screens), retaining the existing all-games and
+shared-rating order. The Grid/List controls remember a separate choice per view
+on this device under `coopDbViewModesV1`; these presentation preferences never
+change game data or cloud settings. The active profile avatar uses lilac for
+Fred and mint for Manu. Small-list targets remain 44px wide for touch use.

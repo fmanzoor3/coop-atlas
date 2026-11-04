@@ -25,6 +25,7 @@ with sync_playwright() as p:
  with page.expect_download() as info:page.evaluate('exportData()')
  info.value.save_as('/tmp/polish-backup.json');data=json.loads(Path('/tmp/polish-backup.json').read_text());assert len(data['games'])==168
  page.on('dialog',lambda d:d.accept());page.locator('#import').set_input_files('/tmp/polish-backup.json');page.wait_for_timeout(100);assert json.loads(page.evaluate("localStorage.getItem('coopAtlasGames')"))==data['games'];page.reload();page.wait_for_timeout(300);assert page.evaluate('games.length')==168
+ page.get_by_role('button',name='List view',exact=True).click();page.reload();page.wait_for_timeout(200);assert page.locator('#cards').evaluate("e=>e.classList.contains('is-list')");page.get_by_role('button',name='Grid view',exact=True).click()
  # Detailed guidance remains; no generic genre-derived assessment is invented.
  page.evaluate(f'openGame({gid})');assert page.locator('.assessment').count()==0;page.evaluate("announce('Visible test')");assert page.locator('#toast').evaluate("(e)=>e.closest('dialog').id")=='gameDialog';assert page.locator('#toast').is_visible();page.evaluate('closeGame();openGame(1)');assert page.locator('.assessment-row').count()==5;
  if Path('/tmp/coop-polish-art/shots.json').exists():page.locator('.shot').first.click()
